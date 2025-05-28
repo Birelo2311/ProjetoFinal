@@ -11,7 +11,7 @@ import {styles} from './styles';
 type HomeScreenProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export function HomeScreen() {
-  const navigation = useNavigation<HomeScreenProp>(); // ✅ Agora dentro do componente
+  const navigation = useNavigation<HomeScreenProp>();
 
   function signOut() {
     auth().signOut();
@@ -28,7 +28,7 @@ export function HomeScreen() {
         title="Ir para Tela Inicial"
       />
       <Text>
-        by <Text style={styles.coffText}>Coffstack</Text>
+        by <Text style={styles.coffText}>ProjetoEG</Text>
       </Text>
     </View>
   );

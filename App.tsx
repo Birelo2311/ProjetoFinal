@@ -9,6 +9,7 @@ import {RootStackParamList} from './src/routes/types';
 import {HomeScreen} from './src/screens/HomeScreen';
 import {SignInScreen} from './src/screens/SignInScreen';
 import {TelaInicial} from './src/screens/telainicial';
+import {AdicionarDoacao} from './src/screens/AdicionarDoacao';
 
 import {colors} from './src/colors';
 
@@ -49,6 +50,11 @@ const App = () => {
               name="TelaInicial"
               component={TelaInicial}
               options={{title: 'Tela Inicial'}}
+            />
+            <Stack.Screen
+              name="AdicionarDoacao"
+              component={AdicionarDoacao}
+              options={{title: 'Tela Doação'}}
             />
           </>
         ) : (

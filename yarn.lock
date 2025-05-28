@@ -2005,6 +2005,13 @@
     prompts "^2.4.2"
     semver "^7.5.2"
 
+"@react-native-community/datetimepicker@^8.4.1":
+  version "8.4.1"
+  resolved "https://registry.npmjs.org/@react-native-community/datetimepicker/-/datetimepicker-8.4.1.tgz"
+  integrity sha512-DrK+CUS5fZnz8dhzBezirkzQTcNDdaXer3oDLh0z4nc2tbdIdnzwvXCvi8IEOIvleoc9L95xS5tKUl0/Xv71Mg==
+  dependencies:
+    invariant "^2.2.4"
+
 "@react-native-firebase/app@^22.2.0", "@react-native-firebase/app@22.2.0":
   version "22.2.0"
   resolved "https://registry.npmjs.org/@react-native-firebase/app/-/app-22.2.0.tgz"
@@ -2018,6 +2025,16 @@
   integrity sha512-RnuZVisa9a/ey9nyeBHUDkMNwoHLRuvDCjGwC/qgj/ygyEAjOTV4zqZ/OHSVOhQO/UwU4L0tYdxwT2EQorhgDA==
   dependencies:
     plist "^3.1.0"
+
+"@react-native-firebase/firestore@^22.2.0":
+  version "22.2.0"
+  resolved "https://registry.npmjs.org/@react-native-firebase/firestore/-/firestore-22.2.0.tgz"
+  integrity sha512-SO6U9u2B4sDuu+R5o7XxtB7Yvf860tZU6yNQNtdlIeXCtf8Sj67OrQbJcPBX7TJftTmuzDd2gzxaOMwAOLsdDw==
+
+"@react-native-picker/picker@^2.11.0":
+  version "2.11.0"
+  resolved "https://registry.npmjs.org/@react-native-picker/picker/-/picker-2.11.0.tgz"
+  integrity sha512-QuZU6gbxmOID5zZgd/H90NgBnbJ3VV6qVzp6c7/dDrmWdX8S0X5YFYgDcQFjE3dRen9wB9FWnj2VVdPU64adSg==
 
 "@react-native/assets-registry@0.79.2":
   version "0.79.2"
