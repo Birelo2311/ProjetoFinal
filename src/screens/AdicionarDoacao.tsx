@@ -40,11 +40,16 @@ export function AdicionarDoacao() {
 
     try {
       await firestore().collection('doacoes').add(dados);
-      navigation.goBack();
-    } catch (error) {
-      Alert.alert('Erro', 'Ocorreu um erro ao salvar a doação');
-    }
-  };
+      Alert.alert('Sucesso', 'Doação cadastrada com sucesso!', [
+      {
+        text: 'OK',
+        onPress: () => navigation.goBack(),
+      },
+    ]);
+  } catch (error) {
+    Alert.alert('Erro', 'Ocorreu um erro ao salvar a doação');
+  }
+};
 
   return (
     <View style={styles.container}>

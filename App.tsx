@@ -10,6 +10,7 @@ import {HomeScreen} from './src/screens/HomeScreen';
 import {SignInScreen} from './src/screens/SignInScreen';
 import {TelaInicial} from './src/screens/telainicial';
 import {AdicionarDoacao} from './src/screens/AdicionarDoacao';
+import { EditarDoacao } from './src/screens/EditarDoacao';
 
 import {colors} from './src/colors';
 
@@ -56,13 +57,17 @@ const App = () => {
               component={AdicionarDoacao}
               options={{title: 'Tela Doação'}}
             />
+            <Stack.Screen 
+              name="EditarDoacao"
+              component={EditarDoacao} 
+             />
           </>
         ) : (
           <Stack.Screen
             name="SignIn"
             component={SignInScreen}
             options={{headerShown: false}}
-          />
+          />         
         )}
       </Stack.Navigator>
     </NavigationContainer>

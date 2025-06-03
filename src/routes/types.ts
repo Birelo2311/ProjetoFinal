@@ -3,4 +3,5 @@ export type RootStackParamList = {
   TelaInicial: undefined;
   SignIn: undefined;
   AdicionarDoacao: undefined;
+  EditarDoacao: { id: string };
 };
