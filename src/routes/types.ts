@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ItemDoacao } from '../types/doacao';
 import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
@@ -37,4 +38,12 @@ export type RootStackParamList = {
   DetalhesDoacao: { itens: ItemDoacao[] };
   EditarDoacao: { id: string };
   
+=======
+export type RootStackParamList = {
+  Home: undefined;
+  TelaInicial: undefined;
+  SignIn: undefined;
+  AdicionarDoacao: undefined;
+  EditarDoacao: { id: string };
+>>>>>>> dd4e3985f5b7d2d834aaa7c43066d61dbb0dbe6c
 };
