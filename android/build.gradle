@@ -1,0 +1,34 @@
+buildscript {
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 24
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "1.8.22"  // atualizado aqui
+        react = [
+            enableHermes: true  // ou true se quiser usar Hermes
+        ]
+    }
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.0.2")
+        classpath("com.facebook.react:react-native-gradle-plugin:0.79.3") // atualizado pra 0.79.3
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath('com.google.gms:google-services:4.4.2')
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"
+//apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
