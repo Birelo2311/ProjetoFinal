@@ -7,53 +7,49 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../routes/types';
-import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
-interface PontoDeColeta {
+import addIcon from '../assets/inbox.png';
+import realizaIcon from '../assets/outbox.png';
+
+interface Doacao {
   id: string;
-  codigo: string;
-  nomePonto: string;
-  cep: string;
-  dataCadastro: FirebaseFirestoreTypes.Timestamp | Date;
+  doadorNome: string;
+  doadorTipo: string;
+  data: Date;
 }
 
-type NavProps = NativeStackNavigationProp<RootStackParamList, 'PontosDeColeta'>;
+type NavProps = NativeStackNavigationProp<RootStackParamList, 'CadastroDoacao'>;
 
-export function PontosDeColeta() {
+export function CadastroDoacao() {
   const navigation = useNavigation<NavProps>();
-  const [pontos, setPontos] = useState<PontoDeColeta[]>([]);
+  const [doacoes, setDoacoes] = useState<Doacao[]>([]);
   const [itemSelecionado, setItemSelecionado] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const user = auth().currentUser;
 
   useEffect(() => {
-    if (!user) return;
-
     const unsubscribe = firestore()
-      .collection('pontosDeColeta')
-      .where('userId', '==', user.uid)
-      .orderBy('dataCadastro', 'desc')
+      .collection('doacoes')
+      .orderBy('data', 'desc')
       .onSnapshot(
         (querySnapshot) => {
-          const lista: PontoDeColeta[] = [];
+          const lista: Doacao[] = [];
           querySnapshot.forEach((doc) => {
             const data = doc.data();
             lista.push({
               id: doc.id,
-              codigo: data.codigo || '00',
-              nomePonto: data.nomePonto || 'Sem nome',
-              cep: data.cep || 'CEP não informado',
-              dataCadastro: data.dataCadastro ? data.dataCadastro.toDate() : new Date(),
+              doadorNome: data.doadorNome || 'Sem nome',
+              doadorTipo: data.doadorTipo || 'Voluntário',
+              data: data.data ? (data.data.toDate ? data.data.toDate() : data.data) : new Date(),
             });
           });
-          setPontos(lista);
+          setDoacoes(lista);
         },
         (error) => {
           console.log('Erro no listener:', error);
@@ -61,54 +57,46 @@ export function PontosDeColeta() {
       );
 
     return unsubscribe;
-  }, [user]);
+  }, []);
 
   const atualizarLista = async () => {
-    if (!user) return;
-
     setLoading(true);
 
     try {
       const snapshot = await firestore()
-        .collection('pontosDeColeta')
-        .where('userId', '==', user.uid)
+        .collection('doacoes')
+        .orderBy('data', 'desc')
         .get();
 
-      const lista: PontoDeColeta[] = [];
+      const lista: Doacao[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
         lista.push({
           id: doc.id,
-          codigo: data.codigo || '00',
-          nomePonto: data.nomePonto || 'Sem nome',
-          cep: data.cep || 'CEP não informado',
-          dataCadastro: data.dataCadastro ? data.dataCadastro.toDate() : new Date(),
+          doadorNome: data.doadorNome || 'Sem nome',
+          doadorTipo: data.doadorTipo || 'Voluntário',
+          data: data.data ? (data.data.toDate ? data.data.toDate() : data.data) : new Date(),
         });
       });
 
-      lista.sort((a, b) => {
-        const dataA = a.dataCadastro instanceof Date ? a.dataCadastro : a.dataCadastro.toDate();
-        const dataB = b.dataCadastro instanceof Date ? b.dataCadastro : b.dataCadastro.toDate();
-        return dataB.getTime() - dataA.getTime();
-      });
-
-      setPontos(lista);
+      setDoacoes(lista);
     } catch (error) {
+      console.log(error);
       Alert.alert('Erro', 'Não foi possível atualizar a lista.');
     } finally {
       setLoading(false);
     }
   };
 
-  const excluirPonto = (id: string) => {
-    Alert.alert('Excluir Ponto de Coleta', 'Tem certeza que deseja excluir esse ponto?', [
+  const excluirDoacao = (id: string) => {
+    Alert.alert('Excluir Doação', 'Tem certeza que deseja excluir essa doação?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Excluir',
         style: 'destructive',
         onPress: async () => {
           try {
-            await firestore().collection('pontosDeColeta').doc(id).delete();
+            await firestore().collection('doacoes').doc(id).delete();
             if (itemSelecionado === id) setItemSelecionado(null);
           } catch (error) {
             console.log('Erro ao excluir:', error);
@@ -118,21 +106,17 @@ export function PontosDeColeta() {
     ]);
   };
 
-  const editarPonto = (id: string) => {
-    navigation.navigate('EditarPonto', { id });
+  const editarDoacao = (id: string) => {
+    navigation.navigate('EditarDoacao', { id });
   };
 
-  const verPonto = (ponto: PontoDeColeta) => {
-    navigation.navigate('DetalhesPonto', {
-      id: ponto.id,
-      endereco: ponto.cep, // Caso a tela de detalhes precise de cep como endereço
-      dataCadastro: ponto.dataCadastro,
-    });
+  const verDoacao = (doacao: Doacao) => {
+    navigation.navigate('DetalhesDoacao', { itens: [] });
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Pontos de Coleta Cadastrados</Text>
+      <Text style={styles.title}>Doações Cadastradas</Text>
 
       <TouchableOpacity style={styles.refreshButton} onPress={atualizarLista}>
         <Text style={styles.refreshButtonText}>Atualizar Lista</Text>
@@ -141,36 +125,39 @@ export function PontosDeColeta() {
       {loading && <ActivityIndicator size="large" color="#007bff" style={{ marginBottom: 10 }} />}
 
       <FlatList
-        data={pontos}
+        data={doacoes}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
             onPress={() => setItemSelecionado(itemSelecionado === item.id ? null : item.id)}
             style={styles.item}
           >
-            <Text style={styles.itemText}>Código: {item.codigo}</Text>
-            <Text>Nome do Ponto: {item.nomePonto}</Text>
-            <Text>CEP: {item.cep}</Text>
+            <Text style={styles.itemText}>
+              Doador: {item.doadorNome} ({item.doadorTipo})
+            </Text>
+            <Text>
+              Data: {item.data instanceof Date ? item.data.toLocaleDateString() : ''}
+            </Text>
 
             {itemSelecionado === item.id && (
               <View style={styles.buttonsContainer}>
                 <TouchableOpacity
                   style={[styles.button, styles.buttonVer]}
-                  onPress={() => verPonto(item)}
+                  onPress={() => verDoacao(item)}
                 >
                   <Text style={styles.buttonText}>Ver</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.button, styles.buttonExcluir]}
-                  onPress={() => excluirPonto(item.id)}
+                  onPress={() => excluirDoacao(item.id)}
                 >
                   <Text style={styles.buttonText}>Excluir</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.button, styles.buttonEditar]}
-                  onPress={() => editarPonto(item.id)}
+                  onPress={() => editarDoacao(item.id)}
                 >
                   <Text style={styles.buttonText}>Editar</Text>
                 </TouchableOpacity>
@@ -178,15 +165,27 @@ export function PontosDeColeta() {
             )}
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text>Você ainda não cadastrou nenhum ponto de coleta.</Text>}
+        ListEmptyComponent={<Text>Você ainda não cadastrou nenhuma doação.</Text>}
       />
 
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => navigation.navigate('AdicionarPonto')}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+      {/* Botões Flutuantes */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('AdicionarDoacao')}
+        >
+          <Image source={addIcon} style={styles.fabImage} />
+          <Text style={styles.fabText}>Receber</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => navigation.navigate('RealizaDoacao')}
+        >
+          <Image source={realizaIcon} style={styles.fabImage} />
+          <Text style={styles.fabText}>Doar</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -228,22 +227,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 30,
-    backgroundColor: '#28a745',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  fabText: {
-    color: '#fff',
-    fontSize: 30,
-  },
   refreshButton: {
     backgroundColor: '#007bff',
     padding: 10,
@@ -254,5 +237,35 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 30,
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  fab: {
+    backgroundColor: '#fff', // Fundo branco
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    elevation: 5,
+    borderWidth: 2, // Contorno preto
+    borderColor: '#000',
+  },
+  fabImage: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+    marginBottom: 5,
+  },
+  fabText: {
+    color: '#000', // Texto preto
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

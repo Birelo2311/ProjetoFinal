@@ -8,11 +8,7 @@ import {RootStackParamList} from '../routes/types';
 import {MyButton} from '../components/MyButton';
 import {styles} from './styles';
 
-<<<<<<< HEAD
 type HomeScreenProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
-=======
-type HomeScreenProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
->>>>>>> dd4e3985f5b7d2d834aaa7c43066d61dbb0dbe6c
 
 export function HomeScreen() {
   const navigation = useNavigation<HomeScreenProp>();

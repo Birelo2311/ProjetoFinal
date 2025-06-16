@@ -1,13 +1,15 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { TouchableOpacity, Text, Alert } from 'react-native';
+import { Alert, Image } from 'react-native';
 import auth from '@react-native-firebase/auth';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-import { TelaInicial } from '../screens/telainicial';
+import { CadastroDoacao } from '../screens/CadastroDoacao';
 import { CadastroONG } from '../screens/CadastroONG';
 import CadastroVoluntario from '../screens/CadastroVoluntario';
 import { PontosDeColeta } from '../screens/PontosDeColeta';
+import { HomeScreen } from '../screens/HomeScreen';
+
+import TabBarButton from '../components/TabBarButton';
 
 const Tab = createBottomTabNavigator();
 
@@ -34,78 +36,70 @@ export const Main = () => {
     );
   };
 
+  const icons: Record<string, any> = {
+    HomeScreen: require('../assets/homepage.png'),
+    CadastroONG: require('../assets/home.png'),
+    CadastroVoluntario: require('../assets/handshake.png'),
+    PontosDeColeta: require('../assets/location.png'),
+    CadastroDoacao: require('../assets/t-shirt.png'),
+    Sair: require('../assets/logout.png'),
+  };
+
+  const labels: Record<string, string> = {
+    HomeScreen: 'Início',
+    CadastroONG: 'ONGs',
+    CadastroVoluntario: 'Voluntários',
+    PontosDeColeta: 'Pontos',
+    CadastroDoacao: 'Doações',
+    Sair: 'Sair',
+  };
+
+  const tabBarColor = '#007AFF';
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarIcon: ({ color, size }) => {
-          let iconName = '';
-
-          if (route.name === 'Início') {
-            iconName = 'home';
-          } else if (route.name === 'CadastroONG') {
-            iconName = 'business';
-          } else if (route.name === 'CadastroVoluntario') {
-            iconName = 'groups';
-          } else if (route.name === 'PontosDeColeta') {
-            iconName = 'location-on';
-          } else if (route.name === 'Sair') {
-            iconName = 'logout';
-          }
-
-          return <MaterialIcons name={iconName} size={size} color={color} />;
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          marginBottom: 4,
+        tabBarActiveTintColor: tabBarColor,
+        tabBarInactiveTintColor: '#8e8e93',
+        tabBarLabel: labels[route.name],
+        tabBarIcon: ({ focused, color, size }) => {
+          if (route.name === 'Sair') return null; // Sair terá botão customizado
+          return (
+            <Image
+              source={icons[route.name]}
+              style={{ width: size, height: size, tintColor: color }}
+              resizeMode="contain"
+            />
+          );
         },
       })}
     >
-      <Tab.Screen
-        name="Início"
-        component={TelaInicial}
-      />
-
-      <Tab.Screen
-        name="CadastroONG"
-        component={CadastroONG}
-        options={{ tabBarLabel: 'Cad. ONG' }}
-      />
-
-      <Tab.Screen
-        name="CadastroVoluntario"
-        component={CadastroVoluntario}
-        options={{ tabBarLabel: 'Cad. Voluntário' }}
-      />
-
-      <Tab.Screen
-        name="PontosDeColeta"
-        component={PontosDeColeta}
-        options={{ tabBarLabel: 'Pontos' }}
-      />
-
+      <Tab.Screen name="HomeScreen" component={HomeScreen} />
+      <Tab.Screen name="CadastroONG" component={CadastroONG} />
+      <Tab.Screen name="CadastroVoluntario" component={CadastroVoluntario} />
+      <Tab.Screen name="PontosDeColeta" component={PontosDeColeta} />
+      <Tab.Screen name="CadastroDoacao" component={CadastroDoacao} />
       <Tab.Screen
         name="Sair"
-        component={EmptyScreen}
+        component={() => null}
         options={{
-          tabBarButton: () => (
-            <TouchableOpacity
-              onPress={confirmarSair}
-              style={{
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-              }}
-            >
-              <MaterialIcons name="logout" size={24} color="#007AFF" />
-              <Text style={{ color: '#007AFF', fontSize: 12 }}>Sair</Text>
-            </TouchableOpacity>
-          ),
+          tabBarButton: (props) => {
+            const focused = props.accessibilityState?.selected ?? false;
+            return (
+              <TabBarButton
+                {...props}
+                focused={focused}  // PASSANDO FOCUSED AQUI!
+                icon={icons['Sair']}
+                label={labels['Sair']}
+                color={tabBarColor}
+                size={24}
+                onPress={confirmarSair}
+              />
+            );
+          },
         }}
       />
     </Tab.Navigator>
   );
 };
-
-const EmptyScreen = () => null;
