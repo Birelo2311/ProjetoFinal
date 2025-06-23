@@ -9,8 +9,8 @@ export interface ItemDoacao {
 
 export interface Doacao {
   id: string;
-  destinatarioId: string; // <--- Adicionado
-  destino: 'Voluntário' | 'ONG'; // <--- Corrigido
+  destinatarioId: string;
+  destino: 'Voluntário' | 'ONG';
   itens: ItemDoacao[];
   data: Date;
 }

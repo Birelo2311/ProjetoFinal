@@ -1,4 +1,4 @@
-// CadastroVoluntario.tsx
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonVer: {
-    backgroundColor: '#6f42c1', // roxo
+    backgroundColor: '#6f42c1', 
   },
   buttonExcluir: {
     backgroundColor: '#dc3545',

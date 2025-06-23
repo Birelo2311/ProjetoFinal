@@ -22,7 +22,7 @@ import {
   aplicarMascaraCEP,
   aplicarMascaraCNPJ,
   validarCNPJ,
-} from '../utils/mascaras'; // aqui você precisa criar aplicarMascaraCNPJ e validarCNPJ
+} from '../utils/mascaras'; 
 
 type AdicionarONGNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -151,7 +151,7 @@ export function AdicionarONG({ navigation }: Props) {
           keyboardType="numeric"
           value={cnpj}
           onChangeText={(text) => setCnpj(aplicarMascaraCNPJ(text))}
-          maxLength={18} // 00.000.000/0000-00
+          maxLength={18} 
         />
 
         <TextInput

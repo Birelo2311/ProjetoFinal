@@ -1,4 +1,9 @@
 {
   "name": "ProjetoEG",
-  "displayName": "ProjetoEG"
+  "displayName": "ProjetoEG",
+  "extra": {
+    "eas": {
+      "projectId": "3d77a6ed-1f66-4978-9bfb-b597189923cd"
+    }
+  }
 }

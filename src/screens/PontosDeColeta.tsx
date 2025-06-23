@@ -125,7 +125,7 @@ export function PontosDeColeta() {
   const verPonto = (ponto: PontoDeColeta) => {
     navigation.navigate('DetalhesPonto', {
       id: ponto.id,
-      endereco: ponto.cep, // Caso a tela de detalhes precise de cep como endereço
+      endereco: ponto.cep,
       dataCadastro: ponto.dataCadastro,
     });
   };

@@ -1,71 +1,99 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   FlatList,
+  TouchableOpacity,
   StyleSheet,
   Alert,
   TextInput,
+  Platform,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
 
-type ItemDoacao = {
+import firestore from '@react-native-firebase/firestore';
+import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
+
+interface ItemDoacao {
+  id: string;
+  tipo: string;
   item: string;
   quantidade: number;
-};
+  genero: string;
+  tamanho?: string | null;
+  tamcalcado?: string | null;
+}
 
-type ItemSelecionado = {
-  item: string;
-  quantidadeDisponivel: number;
+interface ItemSelecionado extends ItemDoacao {
   quantidadeSelecionada: number;
   quantidadeInput: string;
-};
+}
 
 export function RealizaDoacao() {
-  const [itensDisponiveis, setItensDisponiveis] = useState<ItemDoacao[]>([]);
-  const [selecionados, setSelecionados] = useState<ItemSelecionado[]>([]);
-  const [tipoDestino, setTipoDestino] = useState<'ong' | 'voluntario' | null>(null);
+  const navigation = useNavigation();
+  const [itensEstoque, setItensEstoque] = useState<ItemDoacao[]>([]);
+  const [itensSelecionados, setItensSelecionados] = useState<ItemSelecionado[]>([]);
+
+  const [buscaNome, setBuscaNome] = useState('');
+  const [filtroTipo, setFiltroTipo] = useState<string>('');
+  const [filtroGenero, setFiltroGenero] = useState<string>('');
+  const [filtroTamanho, setFiltroTamanho] = useState<string>('');
+
   const [destinos, setDestinos] = useState<any[]>([]);
   const [destinoSelecionado, setDestinoSelecionado] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchItens = async () => {
-      const snapshot = await firestore().collection('doacoes').get();
-      const itensMap: { [key: string]: number } = {};
+  const user = auth().currentUser;
 
-      snapshot.forEach((doc) => {
+  if (!user) return;
+
+  const unsubscribe = firestore()
+    .collection('doacoes')
+    .where('userId', '==', user.uid)
+    .onSnapshot(querySnapshot => {
+      const itensMap: { [key: string]: ItemDoacao & { quantidadeTotal: number } } = {};
+
+      querySnapshot.forEach(doc => {
         const data = doc.data();
-        if (data.itens && Array.isArray(data.itens)) {
-          data.itens.forEach((item: any) => {
-            const nome = item.item;
-            const qtd = Number(item.quantidade) || 0;
-            if (itensMap[nome]) {
-              itensMap[nome] += qtd;
-            } else {
-              itensMap[nome] = qtd;
+
+        if (Array.isArray(data.itens)) {
+          data.itens.forEach((i: any) => {
+            if (!i.item) return;
+
+            const chave = `${doc.id}_${i.id}`;
+
+            if (!itensMap[chave]) {
+              itensMap[chave] = {
+                id: chave,
+                item: i.item,
+                tipo: i.tipo,
+                genero: i.genero,
+                tamanho: i.tipo === 'Calçado' ? null : i.tamanho ?? null,
+                tamcalcado: i.tipo === 'Calçado' ? i.tamcalcado ?? null : null,
+                quantidade: 0,
+                quantidadeTotal: 0,
+              };
             }
+            itensMap[chave].quantidadeTotal += i.quantidade || 0;
           });
         }
       });
 
-      const itensArray: ItemDoacao[] = Object.keys(itensMap).map((key) => ({
-        item: key,
-        quantidade: itensMap[key],
+      const itensArray = Object.values(itensMap).map(i => ({
+        ...i,
+        quantidade: i.quantidadeTotal,
       }));
 
-      setItensDisponiveis(itensArray);
-    };
+      setItensEstoque(itensArray);
+    });
 
-    fetchItens();
-  }, []);
+  return unsubscribe;
+}, []);
 
   useEffect(() => {
-    if (!tipoDestino) return;
-
     const fetchDestinos = async () => {
-      const collection = tipoDestino === 'ong' ? 'ongs' : 'voluntarios';
-      const snapshot = await firestore().collection(collection).get();
+      const snapshot = await firestore().collection('ongs').get();
       const lista: any[] = [];
       snapshot.forEach((doc) => {
         lista.push({ id: doc.id, ...doc.data() });
@@ -74,29 +102,36 @@ export function RealizaDoacao() {
     };
 
     fetchDestinos();
-  }, [tipoDestino]);
+  }, []);
+
+  const itensFiltrados = useMemo(() => {
+    return itensEstoque.filter(i => {
+      const nomeItem = i.item ? i.item.toLowerCase() : '';
+      const busca = buscaNome.toLowerCase();
+
+      const nomeOk = nomeItem.includes(busca);
+      const tipoOk = filtroTipo ? i.tipo === filtroTipo : true;
+      const generoOk = filtroGenero ? i.genero === filtroGenero : true;
+      const tamanhoOk =
+        filtroTamanho && filtroTipo !== 'Calçado' ? i.tamanho === filtroTamanho : true;
+
+      return nomeOk && tipoOk && generoOk && tamanhoOk;
+    });
+  }, [itensEstoque, buscaNome, filtroTipo, filtroGenero, filtroTamanho]);
 
   const toggleSelecionado = (item: ItemDoacao) => {
-    const existe = selecionados.find((i) => i.item === item.item);
+    const existe = itensSelecionados.find(i => i.id === item.id);
     if (existe) {
-      setSelecionados(selecionados.filter((i) => i.item !== item.item));
+      setItensSelecionados(itensSelecionados.filter(i => i.id !== item.id));
     } else {
-      setSelecionados([
-        ...selecionados,
-        {
-          item: item.item,
-          quantidadeDisponivel: item.quantidade,
-          quantidadeSelecionada: 1,
-          quantidadeInput: '1',
-        },
-      ]);
+      setItensSelecionados([...itensSelecionados, { ...item, quantidadeSelecionada: 1, quantidadeInput: '1' }]);
     }
   };
 
-  const atualizarQuantidadeInput = (itemNome: string, texto: string) => {
-    setSelecionados((sel) =>
+  const atualizarQuantidadeInput = (itemId: string, texto: string) => {
+    setItensSelecionados((sel) =>
       sel.map((i) => {
-        if (i.item === itemNome) {
+        if (i.id === itemId) {
           const novaQtd = parseInt(texto, 10);
           return {
             ...i,
@@ -104,8 +139,8 @@ export function RealizaDoacao() {
             quantidadeSelecionada:
               texto === '' || isNaN(novaQtd)
                 ? i.quantidadeSelecionada
-                : novaQtd > i.quantidadeDisponivel
-                ? i.quantidadeDisponivel
+                : novaQtd > i.quantidade
+                ? i.quantidade
                 : novaQtd,
           };
         }
@@ -115,13 +150,13 @@ export function RealizaDoacao() {
   };
 
   const realizarDoacao = async () => {
-    if (selecionados.length === 0 || !tipoDestino || !destinoSelecionado) {
+    if (itensSelecionados.length === 0 || !destinoSelecionado) {
       Alert.alert('Erro', 'Preencha todos os campos antes de confirmar.');
       return;
     }
 
     try {
-      for (const selItem of selecionados) {
+      for (const selItem of itensSelecionados) {
         let qtdRestante = selItem.quantidadeSelecionada;
 
         const snapshot = await firestore().collection('doacoes').get();
@@ -137,7 +172,13 @@ export function RealizaDoacao() {
 
           for (let i = 0; i < itensDoDoc.length; i++) {
             const item = itensDoDoc[i];
-            if (item.item === selItem.item && item.quantidade > 0) {
+            if (
+              item.item === selItem.item &&
+              item.tipo === selItem.tipo &&
+              item.genero === selItem.genero &&
+              ((item.tipo === 'Calçado' && item.tamcalcado === selItem.tamcalcado) ||
+                (item.tipo !== 'Calçado' && item.tamanho === selItem.tamanho))
+            ) {
               const qtdDisponivelNoDoc = item.quantidade;
               if (qtdDisponivelNoDoc >= qtdRestante) {
                 itensDoDoc[i].quantidade = qtdDisponivelNoDoc - qtdRestante;
@@ -163,36 +204,33 @@ export function RealizaDoacao() {
         }
       }
 
-      Alert.alert('Sucesso', 'Doação realizada e estoque atualizado!');
-      setSelecionados([]);
-      setDestinoSelecionado(null);
-      setTipoDestino(null);
-      setDestinos([]);
+      await firestore().collection('doacoesRealizadas').add({
+  destinoId: destinoSelecionado,
+  destinoTipo: 'ONG',
+  data: firestore.FieldValue.serverTimestamp(),
+  itens: itensSelecionados.map(i => ({
+    item: i.item,
+    tipo: i.tipo,
+    genero: i.genero,
+    tamanho: i.tamanho,
+    tamcalcado: i.tamcalcado,
+    quantidade: i.quantidadeSelecionada,
+  })),
+});
 
-      // Atualiza lista de itens após doação
-      const snapshot = await firestore().collection('doacoes').get();
-      const itensMap: { [key: string]: number } = {};
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.itens && Array.isArray(data.itens)) {
-          data.itens.forEach((item: any) => {
-            const nome = item.item;
-            const qtd = Number(item.quantidade) || 0;
-            if (itensMap[nome]) {
-              itensMap[nome] += qtd;
-            } else {
-              itensMap[nome] = qtd;
-            }
-          });
-        }
-      });
-      const itensArray: ItemDoacao[] = Object.keys(itensMap).map((key) => ({
-        item: key,
-        quantidade: itensMap[key],
-      }));
-      setItensDisponiveis(itensArray);
+Alert.alert('Sucesso', 'Doação realizada e registrada!', [
+  {
+    text: 'OK',
+    onPress: () => navigation.goBack(),
+  },
+]);
+
+setItensSelecionados([]);
+setDestinoSelecionado(null);
+setDestinos([]);
+
     } catch (error: any) {
-      Alert.alert('Erro', 'Falha ao atualizar o estoque: ' + error.message);
+      Alert.alert('Erro', 'Falha ao realizar a doação: ' + error.message);
     }
   };
 
@@ -200,96 +238,100 @@ export function RealizaDoacao() {
     <View style={styles.container}>
       <Text style={styles.title}>Realizar Doação</Text>
 
-      <Text style={styles.section}>Selecione os itens:</Text>
+      <TextInput
+        placeholder="Buscar por nome"
+        value={buscaNome}
+        onChangeText={setBuscaNome}
+        style={styles.inputFiltro}
+      />
+
+      <View style={styles.filtrosContainer}>
+        <View style={styles.pickerWrapper}>
+          <Picker selectedValue={filtroTipo} onValueChange={setFiltroTipo} style={styles.picker}>
+            <Picker.Item label="Tipo (todos)" value="" />
+            <Picker.Item label="Acessório" value="Acessório" />
+            <Picker.Item label="Roupa" value="Roupa" />
+            <Picker.Item label="Calçado" value="Calçado" />
+            <Picker.Item label="Outros" value="Outros" />
+          </Picker>
+        </View>
+
+        <View style={styles.pickerWrapper}>
+          <Picker selectedValue={filtroGenero} onValueChange={setFiltroGenero} style={styles.picker}>
+            <Picker.Item label="Sexo (todos)" value="" />
+            <Picker.Item label="Masculino" value="Masculino" />
+            <Picker.Item label="Feminino" value="Feminino" />
+            <Picker.Item label="Unissex" value="Unissex" />
+          </Picker>
+        </View>
+
+        {filtroTipo !== 'Calçado' && (
+          <View style={styles.pickerWrapper}>
+            <Picker selectedValue={filtroTamanho} onValueChange={setFiltroTamanho} style={styles.picker}>
+              <Picker.Item label="Tamanho (todos)" value="" />
+              <Picker.Item label="PP" value="PP" />
+              <Picker.Item label="P" value="P" />
+              <Picker.Item label="M" value="M" />
+              <Picker.Item label="G" value="G" />
+              <Picker.Item label="GG" value="GG" />
+            </Picker>
+          </View>
+        )}
+      </View>
+
       <FlatList
-        data={itensDisponiveis}
-        keyExtractor={(item) => item.item}
+        data={itensFiltrados}
+        keyExtractor={item => item.id}
+        style={{ marginTop: 10 }}
         renderItem={({ item }) => {
-          const marcado = selecionados.some((i) => i.item === item.item);
+          const marcado = itensSelecionados.some(i => i.id === item.id);
+          const itemSelecionado = itensSelecionados.find(i => i.id === item.id);
+
           return (
             <TouchableOpacity
               onPress={() => toggleSelecionado(item)}
               style={[styles.item, marcado && styles.itemSelecionado]}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View
-                  style={[
-                    styles.checkbox,
-                    marcado ? styles.checkboxMarcado : styles.checkboxVazio,
-                  ]}
-                />
-                <Text style={{ marginLeft: 8 }}>
-                  {item.item} - Qtd: {item.quantidade}
-                </Text>
-              </View>
+              <Text>{item.item} ({item.quantidade})</Text>
+              {marcado && (
+                <>
+                  <Text style={{ marginTop: 10 }}>Quantidade a enviar:</Text>
+                  <TextInput
+                    keyboardType="number-pad"
+                    style={styles.inputQtd}
+                    value={itemSelecionado?.quantidadeInput}
+                    onChangeText={(text) => {
+                      if (text === '' || /^\d+$/.test(text)) {
+                        atualizarQuantidadeInput(item.id, text);
+                      }
+                    }}
+                    maxLength={3}
+                  />
+                </>
+              )}
             </TouchableOpacity>
           );
         }}
         keyboardShouldPersistTaps="handled"
       />
 
-      {selecionados.length > 0 && (
-        <>
-          <Text style={[styles.section, { marginTop: 30 }]}>Itens Selecionados:</Text>
-          {selecionados.map((item) => (
-            <View key={item.item} style={styles.selecionadoItem}>
-              <Text style={{ flex: 1 }}>{item.item}</Text>
-              <TextInput
-                keyboardType="number-pad"
-                style={styles.inputQtd}
-                value={item.quantidadeInput}
-                onChangeText={(text) => {
-                  if (text === '' || /^\d+$/.test(text)) {
-                    atualizarQuantidadeInput(item.item, text);
-                  }
-                }}
-                maxLength={3}
-              />
-              <Text style={{ marginLeft: 8 }}> / {item.quantidadeDisponivel}</Text>
-            </View>
-          ))}
-        </>
-      )}
-
-      <View style={styles.opcoesDestino}>
-        <TouchableOpacity
-          onPress={() => setTipoDestino('ong')}
-          style={[styles.botaoDestino, tipoDestino === 'ong' && styles.botaoAtivo]}
-        >
-          <Text>ONG</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => setTipoDestino('voluntario')}
-          style={[styles.botaoDestino, tipoDestino === 'voluntario' && styles.botaoAtivo]}
-        >
-          <Text>Voluntário</Text>
-        </TouchableOpacity>
-      </View>
-
-      {tipoDestino && (
-        <>
-          <Text style={styles.section}>Selecione o destino:</Text>
-          <FlatList
-            data={destinos}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => setDestinoSelecionado(item.id)}
-                style={[
-                  styles.item,
-                  destinoSelecionado === item.id && styles.itemSelecionado,
-                ]}
-              >
-                <Text>{item.nome}</Text>
-              </TouchableOpacity>
-            )}
-            keyboardShouldPersistTaps="handled"
-          />
-        </>
-      )}
+      <Text style={styles.section}>Selecione a ONG destino:</Text>
+      <FlatList
+        data={destinos}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => setDestinoSelecionado(item.id)}
+            style={[styles.item, destinoSelecionado === item.id && styles.itemSelecionado]}
+          >
+            <Text>{item.nome}</Text>
+          </TouchableOpacity>
+        )}
+        keyboardShouldPersistTaps="handled"
+      />
 
       <TouchableOpacity style={styles.botaoConfirmar} onPress={realizarDoacao}>
-        <Text style={styles.botaoTexto}>Confirmar Doação</Text>
+        <Text style={styles.botaoTexto}>Enviar Itens</Text>
       </TouchableOpacity>
     </View>
   );
@@ -297,68 +339,24 @@ export function RealizaDoacao() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  section: { fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
-  item: {
-    padding: 10,
-    backgroundColor: '#f1f1f1',
-    marginBottom: 5,
-    borderRadius: 6,
-  },
-  itemSelecionado: {
-    backgroundColor: '#d4edda',
-  },
-  opcoesDestino: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
-  },
-  botaoDestino: {
-    padding: 10,
-    backgroundColor: '#e2e2e2',
-    borderRadius: 6,
-  },
-  botaoAtivo: {
-    backgroundColor: '#bee5eb',
-  },
-  botaoConfirmar: {
-    marginTop: 30,
-    backgroundColor: '#28a745',
-    padding: 15,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  botaoTexto: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 3,
-    borderWidth: 1.5,
-  },
-  checkboxVazio: {
-    borderColor: '#555',
-    backgroundColor: '#fff',
-  },
-  checkboxMarcado: {
-    borderColor: '#28a745',
-    backgroundColor: '#28a745',
-  },
-  selecionadoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  inputQtd: {
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: '#000' },
+  inputFiltro: {
     borderWidth: 1,
-    borderColor: '#999',
+    borderColor: '#aaa',
     borderRadius: 6,
-    width: 70,  // aumentei largura do campo
-    height: 40, // aumentei altura do campo para facilitar digitação
-    paddingHorizontal: 10,
-    textAlign: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+    fontSize: 14,
+    marginBottom: 10,
+    color: '#000',
   },
+  filtrosContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  pickerWrapper: { flex: 1, marginHorizontal: 5, borderWidth: 1, borderColor: '#aaa', borderRadius: 6, overflow: 'hidden', height: 40, justifyContent: 'center', backgroundColor: '#fff' },
+  picker: { height: 55, width: '100%', color: '#000' },
+  item: { backgroundColor: '#f9f9f9', padding: 15, marginVertical: 6, borderRadius: 6 },
+  itemSelecionado: { backgroundColor: '#d4edda' },
+  inputQtd: { borderWidth: 1, borderColor: '#999', borderRadius: 6, width: 70, height: 40, paddingHorizontal: 10, textAlign: 'center', marginTop: 10 },
+  section: { fontSize: 16, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
+  botaoConfirmar: { marginTop: 30, backgroundColor: '#28a745', padding: 15, borderRadius: 6, alignItems: 'center', marginBottom: 40 },
+  botaoTexto: { color: '#fff', fontWeight: 'bold' },
 });

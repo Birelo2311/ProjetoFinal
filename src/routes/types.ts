@@ -3,6 +3,7 @@ import { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
 
 export type RootStackParamList = {
   Main: undefined;
+  TelaInicial: undefined;
   CadastroDoacao: undefined;
   SignIn: undefined;
   AdicionarDoacao: undefined;
@@ -11,9 +12,11 @@ export type RootStackParamList = {
   CadastroONG: undefined;
   AdicionarONG: undefined;
   RealizaDoacao: undefined;
+  ManualUsuario: undefined;
   
   EditarVoluntario: { id: string };
   EditarONG: { id: string };
+  
   
   DetalhesVoluntario: {
     id: string;
@@ -35,7 +38,7 @@ export type RootStackParamList = {
   };
   
   DetalhesDoacao: { itens: ItemDoacao[] };
-  EditarDoacao: { id: string };
+  EditarDoacao: { doacaoId: string; itemId: string };
 
   PontosDeColeta: undefined;
   AdicionarPonto: undefined;

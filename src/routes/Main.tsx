@@ -5,7 +5,7 @@ import auth from '@react-native-firebase/auth';
 
 import { CadastroDoacao } from '../screens/CadastroDoacao';
 import { CadastroONG } from '../screens/CadastroONG';
-import CadastroVoluntario from '../screens/CadastroVoluntario';
+import ManualUsuario from '../screens/ManualUsuario';
 import { PontosDeColeta } from '../screens/PontosDeColeta';
 import { HomeScreen } from '../screens/HomeScreen';
 
@@ -39,7 +39,7 @@ export const Main = () => {
   const icons: Record<string, any> = {
     HomeScreen: require('../assets/homepage.png'),
     CadastroONG: require('../assets/home.png'),
-    CadastroVoluntario: require('../assets/handshake.png'),
+    ManualUsuario: require('../assets/manual.png'),
     PontosDeColeta: require('../assets/location.png'),
     CadastroDoacao: require('../assets/t-shirt.png'),
     Sair: require('../assets/logout.png'),
@@ -48,7 +48,7 @@ export const Main = () => {
   const labels: Record<string, string> = {
     HomeScreen: 'Início',
     CadastroONG: 'ONGs',
-    CadastroVoluntario: 'Voluntários',
+    ManualUsuario: 'Manual',
     PontosDeColeta: 'Pontos',
     CadastroDoacao: 'Doações',
     Sair: 'Sair',
@@ -64,7 +64,7 @@ export const Main = () => {
         tabBarInactiveTintColor: '#8e8e93',
         tabBarLabel: labels[route.name],
         tabBarIcon: ({ focused, color, size }) => {
-          if (route.name === 'Sair') return null; // Sair terá botão customizado
+          if (route.name === 'Sair') return null; 
           return (
             <Image
               source={icons[route.name]}
@@ -77,7 +77,7 @@ export const Main = () => {
     >
       <Tab.Screen name="HomeScreen" component={HomeScreen} />
       <Tab.Screen name="CadastroONG" component={CadastroONG} />
-      <Tab.Screen name="CadastroVoluntario" component={CadastroVoluntario} />
+      <Tab.Screen name="ManualUsuario" component={ManualUsuario} />
       <Tab.Screen name="PontosDeColeta" component={PontosDeColeta} />
       <Tab.Screen name="CadastroDoacao" component={CadastroDoacao} />
       <Tab.Screen
@@ -89,7 +89,7 @@ export const Main = () => {
             return (
               <TabBarButton
                 {...props}
-                focused={focused}  // PASSANDO FOCUSED AQUI!
+                focused={focused}
                 icon={icons['Sair']}
                 label={labels['Sair']}
                 color={tabBarColor}

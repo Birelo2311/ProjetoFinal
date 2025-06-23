@@ -8,7 +8,7 @@ const TelaInicial = ({ navigation }) => {
       
       <Button 
         title="Ir para outra tela"
-        onPress={() => navigation.navigate('OutraTela')} // Ajuste para sua próxima tela
+        onPress={() => navigation.navigate('OutraTela')}
       />
     </View>
   );
