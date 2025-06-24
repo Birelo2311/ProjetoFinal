@@ -136,8 +136,8 @@ export default function AdicionarDoacao() {
         Alert.alert('Erro', 'Usuário não autenticado.');
         return;
       }
-
-      // Salva no estoque
+      //
+      
       await firestore().collection('doacoes').add({
         userId: user.uid,
         ponto: pontoSelecionado,
@@ -145,7 +145,7 @@ export default function AdicionarDoacao() {
         itens: itensSanitizados,
       });
 
-      // Salva no histórico de doações recebidas
+      
       await firestore().collection('doacoesRecebidas').add({
         userId: user.uid,
         ponto: pontoSelecionado,
